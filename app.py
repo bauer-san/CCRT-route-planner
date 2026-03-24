@@ -4,6 +4,7 @@ import pandas as pd
 from ortools.constraint_solver import routing_enums_pb2
 from ortools.constraint_solver import pywrapcp
 import urllib.parse
+import ccrtrp
 
 # --- CONFIGURATION & UI ---
 st.set_page_config(page_title="Delivery Route Planner", layout="wide")
