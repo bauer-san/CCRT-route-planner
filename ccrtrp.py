@@ -1,7 +1,7 @@
 from ortools.constraint_solver import routing_enums_pb2
 from ortools.constraint_solver import pywrapcp
 import googlemaps
-from google.colab import userdata
+#from google.colab import userdata
 from pprint import pprint
 import urllib.parse
 
