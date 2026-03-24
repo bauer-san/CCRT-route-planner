@@ -6,7 +6,7 @@ from pprint import pprint
 import urllib.parse
 
 # Initialize Google Maps client (assuming API key is loaded from secrets in a previous cell)
-gmaps = googlemaps.Client(key=userdata.get('GOOGLE_MAPS_API_KEY'))
+#gmaps = googlemaps.Client(key=userdata.get('GOOGLE_MAPS_API_KEY'))
 
 # 1. DATA PREPARATION
 def create_data_model(addresses, num_vehicles, depot_index=0):
