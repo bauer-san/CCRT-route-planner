@@ -124,6 +124,7 @@ def get_readable_output(data, manager, routing, solution):
 
 def print_final_manifests(route_results):
     for team, details in route_results.items():
+        st.divider()
         stops = details['route']
         distance = details['distance']
         st.write(f"\n=== {team.upper()} MANIFEST ===")
@@ -135,6 +136,8 @@ def print_final_manifests(route_results):
 
         #st.write(f"Digital Route: {gmaps_url}")
         st.markdown(f"[🔗 Open in Google Maps]({gmaps_url})")
+        st.table(stops)
+
         st.write(f"{'Stop #':<8} | {'Address'}")
         st.write("-" * 40)
         for i, addr in enumerate(stops):
