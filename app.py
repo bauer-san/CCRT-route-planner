@@ -13,7 +13,6 @@ st.title("🚚 Team Route Optimizer")
 # Sidebar for Settings
 with st.sidebar:
     st.header("Settings")
-    api_key = st.text_input("Google Maps API Key", type="password")
     num_teams = st.number_input("Number of Teams", min_value=1, max_value=20, value=3)
     st.info("Upload a CSV/Excel file with an 'Address' column.")
 
@@ -28,8 +27,8 @@ def solve_routing_logic(addresses, n_teams, gmaps_client):
     pass 
 
 # --- WEB APP MAIN LOGIC ---
-if uploaded_file and api_key:
-    gmaps = googlemaps.Client(key=api_key)
+if uploaded_file:
+    gmaps = googlemaps.Client(key=st.secrets.GOOGLE_MAPS_API_KEY)
     
     # Read file
     if uploaded_file.name.endswith('.csv'):
