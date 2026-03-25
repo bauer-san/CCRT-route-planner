@@ -92,10 +92,10 @@ def solve_routing(data):
 
     # Balancing load (max distance per team). Adjust this value based on typical route lengths.
     # The distance is in meters. So 5000000 means 5000 km in meters.
-    routing.AddDimension(transit_callback_index, 0, 5000000, True, 'Distance') # Capacity now in meters
+    ##routing.AddDimension(transit_callback_index, 0, 5000000, True, 'Distance') # Capacity now in meters
     
     # Add objective: Minimize the maximum distance traveled by any vehicle.
-    distance_dimension = routing.GetDimensionOrDie('Distance')
+    ##distance_dimension = routing.GetDimensionOrDie('Distance')
     # Add a global span constraint to the distance dimension (optional, but good practice)
     # distance_dimension.SetGlobalSpanCostCoefficient(100) # This is for minimizing span, not max
 
