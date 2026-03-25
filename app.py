@@ -153,17 +153,8 @@ with st.sidebar:
 # File Uploader
 uploaded_file = st.file_uploader("Drag and drop address file here", type=["csv", "xlsx"])
 
-# --- YOUR OPTIMIZATION FUNCTIONS (Modified for Web) ---
-def solve_routing_logic(addresses, n_teams, gmaps_client):
-    # This is where your create_data_model, solve_routing, 
-    # and get_readable_output functions live.
-    # (Use the logic from your Colab script here)
-    pass 
-
 # --- WEB APP MAIN LOGIC ---
 if uploaded_file:
-    
-    
     # Read file
     if uploaded_file.name.endswith('.csv'):
         df = pd.read_csv(uploaded_file)
@@ -179,8 +170,13 @@ if uploaded_file:
         if st.button("🚀 Optimize Routes"):
             with st.spinner("Calculating optimal paths..."):
                 # 1. Call your existing 'create_data_model'
+                main_data = create_data_model(addresses, num_teams)
+                
                 # 2. Call 'solve_routing'
+                routing_model, routing_manager, solution_obj = solve_routing(main_data)
+                
                 # 3. Call 'get_readable_output'
+                readable_routes = get_readable_output(main_data, routing_manager, routing_model, solution_obj)
                 
                 # MOCK OUTPUT for demonstration based on your logic
                 # results = solve_routing_logic(addresses, num_teams, gmaps)
