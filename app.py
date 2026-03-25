@@ -134,7 +134,7 @@ def print_final_manifests(route_results):
         gmaps_url = f"https://www.google.com/maps/dir/?api=1&origin={urllib.parse.quote_plus(stops[0])}&destination={urllib.parse.quote_plus(stops[-1])}&waypoints={waypoints_str}"
 
         #st.write(f"Digital Route: {gmaps_url}")
-        st.markdown(f"🔗 Open in Google Maps [link]({gmaps_url})")
+        st.markdown(f"[🔗 Open in Google Maps]({gmaps_url})")
         st.write(f"{'Stop #':<8} | {'Address'}")
         st.write("-" * 40)
         for i, addr in enumerate(stops):
@@ -186,12 +186,12 @@ if uploaded_file:
                     print("Could not create data model due to missing distance matrix. Check API key and network connection.")
                 
                 # --- DISPLAY RESULTS ---
-                st.divider()
-                cols = st.columns(num_teams)
+                #st.divider()
+                #cols = st.columns(num_teams)
                 
-                for i in range(num_teams):
-                    with cols[i]:
-                        st.subheader(f"Team {i+1}")
+                #for i in range(num_teams):
+                    #with cols[i]:
+                        #st.subheader(f"Team {i+1}")
                         # Display Digital Link
                         #st.markdown(f"[🔗 Open in Google Maps](http://googleusercontent.com/maps.google.com/5)")
                         
