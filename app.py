@@ -99,6 +99,8 @@ def solve_routing(data):
     # Add a global span constraint to the distance dimension (optional, but good practice)
     # distance_dimension.SetGlobalSpanCostCoefficient(100) # This is for minimizing span, not max
 
+    max_shift_time = 28800 #8-hour shift limit (8 * 3600 = 28,800 seconds)
+    
     routing.AddDimension(
         transit_callback_index,
         0,                # Allow zero waiting time
