@@ -171,15 +171,25 @@ if uploaded_file:
             with st.spinner("Calculating optimal paths..."):
                 # 1. Call your existing 'create_data_model'
                 main_data = create_data_model(addresses, num_teams)
+
+                if 'distance_matrix' in main_data and main_data['distance_matrix']:
+                    routing_model, routing_manager, solution_obj = solve_routing(main_data)
+
+                    if solution_obj:
+                        readable_routes = get_readable_output(main_data, routing_manager, routing_model, solution_obj)
+                        print_final_manifests(readable_routes)
+                    else:
+                        print("No solution found!")
+                else:
+                    print("Could not create data model due to missing distance matrix. Check API key and network connection.")
                 
                 # 2. Call 'solve_routing'
-                routing_model, routing_manager, solution_obj = solve_routing(main_data)
+                #routing_model, routing_manager, solution_obj = solve_routing(main_data)
                 
                 # 3. Call 'get_readable_output'
-                readable_routes = get_readable_output(main_data, routing_manager, routing_model, solution_obj)
+                #readable_routes = get_readable_output(main_data, routing_manager, routing_model, solution_obj)
                 
-                # MOCK OUTPUT for demonstration based on your logic
-                # results = solve_routing_logic(addresses, num_teams, gmaps)
+                #print_final_manifests(readable_routes)
                 
                 # --- DISPLAY RESULTS ---
                 st.divider()
