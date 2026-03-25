@@ -165,6 +165,7 @@ if uploaded_file:
         st.error("Error: Your file must have a column named 'Address'")
     else:
         addresses = df['Address'].tolist()
+        addresses.insert(0, "49 W Huron St, Pontiac, MI 48342")
         st.success(f"Loaded {len(addresses)} addresses.")
 
         if st.button("🚀 Optimize Routes"):
