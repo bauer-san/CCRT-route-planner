@@ -133,16 +133,9 @@ def print_final_manifests(route_results):
         encoded_waypoints = [urllib.parse.quote_plus(stop) for stop in stops[1:-1]] # URL encode waypoints
         waypoints_str = "|".join(encoded_waypoints)
         gmaps_url = f"https://www.google.com/maps/dir/?api=1&origin={urllib.parse.quote_plus(stops[0])}&destination={urllib.parse.quote_plus(stops[-1])}&waypoints={waypoints_str}"
-
-        #st.write(f"Digital Route: {gmaps_url}")
         st.markdown(f"[🔗 Open in Google Maps]({gmaps_url})")
-        st.table(stops)
 
-        st.write(f"{'Stop #':<8} | {'Address'}")
-        st.write("-" * 40)
-        for i, addr in enumerate(stops):
-            label = "START" if i == 0 else "END" if i == len(stops)-1 else f"Stop {i}"
-            st.write(f"{label:<8} | {addr}")
+        st.table(stops)
 
 # --- CONFIGURATION & UI ---
 st.set_page_config(page_title="Delivery Route Planner", layout="wide")
