@@ -126,8 +126,8 @@ def print_final_manifests(route_results):
     for team, details in route_results.items():
         stops = details['route']
         distance = details['distance']
-        print(f"\n=== {team.upper()} MANIFEST ===")
-        print(f"Total Distance: {distance} meters") # Display in meters
+        st.write(f"\n=== {team.upper()} MANIFEST ===")
+        st.write(f"Total Distance: {distance} meters") # Display in meters
         # Generate Google Maps Link
         encoded_waypoints = [urllib.parse.quote_plus(stop) for stop in stops[1:-1]] # URL encode waypoints
         waypoints_str = "|".join(encoded_waypoints)
@@ -169,7 +169,7 @@ if uploaded_file:
 
         if st.button("🚀 Optimize Routes"):
             with st.spinner("Calculating optimal paths..."):
-                # 1. Call your existing 'create_data_model'
+
                 main_data = create_data_model(addresses, num_teams)
 
                 if 'distance_matrix' in main_data and main_data['distance_matrix']:
@@ -183,14 +183,6 @@ if uploaded_file:
                 else:
                     print("Could not create data model due to missing distance matrix. Check API key and network connection.")
                 
-                # 2. Call 'solve_routing'
-                #routing_model, routing_manager, solution_obj = solve_routing(main_data)
-                
-                # 3. Call 'get_readable_output'
-                #readable_routes = get_readable_output(main_data, routing_manager, routing_model, solution_obj)
-                
-                #print_final_manifests(readable_routes)
-                
                 # --- DISPLAY RESULTS ---
                 st.divider()
                 cols = st.columns(num_teams)
@@ -199,7 +191,7 @@ if uploaded_file:
                     with cols[i]:
                         st.subheader(f"Team {i+1}")
                         # Display Digital Link
-                        st.markdown(f"[🔗 Open in Google Maps](http://googleusercontent.com/maps.google.com/5)")
+                        #st.markdown(f"[🔗 Open in Google Maps](http://googleusercontent.com/maps.google.com/5)")
                         
                         # Display Printable Table
-                        st.table(df.head(5)) # Replace with optimized stop list
+                        #st.table(df.head(5)) # Replace with optimized stop list
