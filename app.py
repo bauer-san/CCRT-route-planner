@@ -166,7 +166,7 @@ def print_final_manifests(route_results):
 st.set_page_config(page_title="CCRT Route Planner", layout="wide")
 st.title("🚚 CCRT Route Optimizer")
 
-st.logo("CCRT_logo.png", size="medium", link=None, icon_image=None)
+st.logo("CCRT_logo.png", size="large", link="https://www.ccrt.org/", icon_image=None)
 
 # Sidebar for Settings
 with st.sidebar:
