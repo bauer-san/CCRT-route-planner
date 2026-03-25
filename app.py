@@ -135,7 +135,8 @@ def print_final_manifests(route_results):
         gmaps_url = f"https://www.google.com/maps/dir/?api=1&origin={urllib.parse.quote_plus(stops[0])}&destination={urllib.parse.quote_plus(stops[-1])}&waypoints={waypoints_str}"
         st.markdown(f"[🔗 Open in Google Maps]({gmaps_url})")
 
-        st.table(st.dataframe(stops, hide_index=True))
+        column_slice = [row[1] for row in stops]
+        st.table(column_slice)
 
 # --- CONFIGURATION & UI ---
 st.set_page_config(page_title="Delivery Route Planner", layout="wide")
