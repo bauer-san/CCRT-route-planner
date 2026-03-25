@@ -133,12 +133,12 @@ def print_final_manifests(route_results):
         waypoints_str = "|".join(encoded_waypoints)
         gmaps_url = f"https://www.google.com/maps/dir/?api=1&origin={urllib.parse.quote_plus(stops[0])}&destination={urllib.parse.quote_plus(stops[-1])}&waypoints={waypoints_str}"
 
-        print(f"Digital Route: {gmaps_url}")
-        print(f"{'Stop #':<8} | {'Address'}")
-        print("-" * 40)
+        st.write(f"Digital Route: {gmaps_url}")
+        st.write(f"{'Stop #':<8} | {'Address'}")
+        st.write("-" * 40)
         for i, addr in enumerate(stops):
             label = "START" if i == 0 else "END" if i == len(stops)-1 else f"Stop {i}"
-            print(f"{label:<8} | {addr}")
+            st.write(f"{label:<8} | {addr}")
 
 # --- CONFIGURATION & UI ---
 st.set_page_config(page_title="Delivery Route Planner", layout="wide")
