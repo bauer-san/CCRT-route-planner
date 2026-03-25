@@ -88,21 +88,28 @@ def solve_routing(data):
 
     transit_callback_index = routing.RegisterTransitCallback(time_callback)
     
-    #def distance_callback(from_index, to_index):
-        #return data['distance_matrix'][manager.IndexToNode(from_index)][manager.IndexToNode(to_index)]
-
-    #transit_callback_index = routing.RegisterTransitCallback(distance_callback)
     routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)
 
     # Balancing load (max distance per team). Adjust this value based on typical route lengths.
     # The distance is in meters. So 5000000 means 5000 km in meters.
     routing.AddDimension(transit_callback_index, 0, 5000000, True, 'Distance') # Capacity now in meters
-
+    
     # Add objective: Minimize the maximum distance traveled by any vehicle.
     distance_dimension = routing.GetDimensionOrDie('Distance')
     # Add a global span constraint to the distance dimension (optional, but good practice)
     # distance_dimension.SetGlobalSpanCostCoefficient(100) # This is for minimizing span, not max
 
+    routing.AddDimension(
+        transit_callback_index,
+        0,                # Allow zero waiting time
+        max_shift_time,   # Maximum time per team in seconds
+        True,             # Start cumulative time at zero
+        'Time'            # Name of the dimension
+        )
+
+    time_dimension = routing.GetDimensionOrDie('Time')
+    time_dimension.SetGlobalSpanCostCoefficient(100) # This keeps teams balanced by time    
+    
     # Minimize the maximum distance traveled by any vehicle.
     # We need to find the maximum cumul value among all vehicles at their respective end nodes.
     # The objective is to minimize this maximum value.
@@ -154,8 +161,8 @@ def print_final_manifests(route_results):
         st.table(stops)
 
 # --- CONFIGURATION & UI ---
-st.set_page_config(page_title="Delivery Route Planner", layout="wide")
-st.title("🚚 Team Route Optimizer")
+st.set_page_config(page_title="CCRT Route Planner", layout="wide")
+st.title("🚚 CCRT Route Optimizer")
 
 # Sidebar for Settings
 with st.sidebar:
