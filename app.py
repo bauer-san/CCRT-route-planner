@@ -134,8 +134,6 @@ def print_final_manifests(route_results):
         waypoints_str = "|".join(encoded_waypoints)
         gmaps_url = f"https://www.google.com/maps/dir/?api=1&origin={urllib.parse.quote_plus(stops[0])}&destination={urllib.parse.quote_plus(stops[-1])}&waypoints={waypoints_str}"
         st.markdown(f"[🔗 Open in Google Maps]({gmaps_url})")
-
-        st.write(stops)
         st.table(stops)
 
 # --- CONFIGURATION & UI ---
