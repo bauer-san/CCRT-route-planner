@@ -135,7 +135,7 @@ def print_final_manifests(route_results):
         gmaps_url = f"https://www.google.com/maps/dir/?api=1&origin={urllib.parse.quote_plus(stops[0])}&destination={urllib.parse.quote_plus(stops[-1])}&waypoints={waypoints_str}"
         st.markdown(f"[🔗 Open in Google Maps]({gmaps_url})")
 
-        st.table(stops)
+        st.table(stops.style.hide(axis="index"))
 
 # --- CONFIGURATION & UI ---
 st.set_page_config(page_title="Delivery Route Planner", layout="wide")
