@@ -128,14 +128,14 @@ def print_final_manifests(route_results):
         stops = details['route']
         distance = details['distance']
         st.write(f"\n=== {team.upper()} MANIFEST ===")
-        st.write(f"Total Distance: {distance} meters") # Display in meters
+        st.write(f"Total Distance: {distance} km") # Display in kilometers
         # Generate Google Maps Link
         encoded_waypoints = [urllib.parse.quote_plus(stop) for stop in stops[1:-1]] # URL encode waypoints
         waypoints_str = "|".join(encoded_waypoints)
         gmaps_url = f"https://www.google.com/maps/dir/?api=1&origin={urllib.parse.quote_plus(stops[0])}&destination={urllib.parse.quote_plus(stops[-1])}&waypoints={waypoints_str}"
         st.markdown(f"[🔗 Open in Google Maps]({gmaps_url})")
 
-        st.table(stops.style.hide(axis="index"))
+        st.table(st.dataframe(stops, hide_index=True))
 
 # --- CONFIGURATION & UI ---
 st.set_page_config(page_title="Delivery Route Planner", layout="wide")
