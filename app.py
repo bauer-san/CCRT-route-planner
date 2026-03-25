@@ -41,7 +41,9 @@ def create_data_model(addresses, num_vehicles, depot_index=0):
 
                             if element['status'] == 'OK':
                                 # Distance is in meters, store directly
-                                full_distance_matrix[global_origin_index][global_destination_index] = element['distance']['value']
+                                #full_distance_matrix[global_origin_index][global_destination_index] = element['distance']['value']
+                                # 'duration' is the time in seconds. 
+                                full_distance_matrix[global_origin_index][global_destination_index] = element['duration']['value']
                             else:
                                 # Placeholder for unreachable or error
                                 full_distance_matrix[global_origin_index][global_destination_index] = 999999999 # Using a large number for meters
@@ -71,10 +73,25 @@ def solve_routing(data):
                                            data['num_vehicles'], data['depot'])
     routing = pywrapcp.RoutingModel(manager)
 
-    def distance_callback(from_index, to_index):
-        return data['distance_matrix'][manager.IndexToNode(from_index)][manager.IndexToNode(to_index)]
+    # Define the service time per stop in seconds (e.g., 10 minutes = 600 seconds)
+    SERVICE_TIME_PER_STOP = 600 
 
-    transit_callback_index = routing.RegisterTransitCallback(distance_callback)
+    def time_callback(from_index, to_index):
+        # Get driving time from the matrix
+        driving_time = data['distance_matrix'][manager.IndexToNode(from_index)][manager.IndexToNode(to_index)]
+    
+        # If we are leaving a stop (not the depot), add the service time
+        if manager.IndexToNode(from_index) != data['depot']:
+            return driving_time + SERVICE_TIME_PER_STOP
+    
+        return driving_time
+
+    transit_callback_index = routing.RegisterTransitCallback(time_callback)
+    
+    #def distance_callback(from_index, to_index):
+        #return data['distance_matrix'][manager.IndexToNode(from_index)][manager.IndexToNode(to_index)]
+
+    #transit_callback_index = routing.RegisterTransitCallback(distance_callback)
     routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)
 
     # Balancing load (max distance per team). Adjust this value based on typical route lengths.
