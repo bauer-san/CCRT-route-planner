@@ -7,66 +7,55 @@ import urllib.parse
 
 gmaps = googlemaps.Client(key=st.secrets.GOOGLE_MAPS_API_KEY)
 
-# 1. DATA PREPARATION
-def create_data_model(addresses, num_vehicles, depot_index=0):
+# 1. DATA PREPARATION - using OSRM demo server
+def create_data_model(addresses, num_vehicles, gmaps_client, depot_index=0):
     data = {}
     data['addresses'] = addresses
     data['num_vehicles'] = num_vehicles
     data['depot'] = depot_index
 
-    num_addresses = len(addresses)
-    full_distance_matrix = [[0 for _ in range(num_addresses)] for _ in range(num_addresses)]
-    chunk_size = 10 # To respect the 100 elements (origin * destination) limit per API call
+    # 1. GEOCODING: Get [lon, lat] for every address
+    # OSRM requires coordinates, so we use Google once per address to get them.
+    coords_list = []
+    st.info("Geocoding addresses...")
+    for addr in addresses:
+        geocode_result = gmaps_client.geocode(addr)
+        if geocode_result:
+            loc = geocode_result[0]['geometry']['location']
+            # IMPORTANT: OSRM uses [longitude, latitude]
+            coords_list.append(f"{loc['lng']},{loc['lat']}")
+        else:
+            st.error(f"Could not find coordinates for: {addr}")
+            return None
 
-    print("Fetching distance matrix from Google Maps API in chunks...")
-
+    # 2. OSRM TABLE CALL: Get the full matrix in one shot
+    # We join the coordinates with semicolons as per OSRM requirements
+    coords_string = ";".join(coords_list)
+    osrm_url = f"http://router.project-osrm.org/table/v1/driving/{coords_string}"
+    
+    # We request 'duration' for time-based optimization
+    params = {"annotations": "duration"}
+    
+    st.info("Fetching travel times from OSRM...")
     try:
-        for i in range(0, num_addresses, chunk_size):
-            origin_chunk = addresses[i:i + chunk_size]
-            for j in range(0, num_addresses, chunk_size):
-                destination_chunk = addresses[j:j + chunk_size]
+        response = requests.get(osrm_url, params=params)
+        response_data = response.json()
 
-                matrix_result = gmaps.distance_matrix(
-                    origins=origin_chunk,
-                    destinations=destination_chunk,
-                    mode="driving",
-                    units="metric"
-                )
-
-                if matrix_result['status'] == 'OK':
-                    for idx_origin, origin in enumerate(matrix_result['rows']):
-                        for idx_dest, element in enumerate(origin['elements']):
-                            global_origin_index = i + idx_origin
-                            global_destination_index = j + idx_dest
-
-                            if element['status'] == 'OK':
-                                # Distance is in meters, store directly
-                                #full_distance_matrix[global_origin_index][global_destination_index] = element['distance']['value']
-                                # 'duration' is the time in seconds. 
-                                full_distance_matrix[global_origin_index][global_destination_index] = element['duration']['value']
-                            else:
-                                # Placeholder for unreachable or error
-                                full_distance_matrix[global_origin_index][global_destination_index] = 999999999 # Using a large number for meters
-                else:
-                    print(f"Error fetching distance matrix for chunk (origins {i}-{i+len(origin_chunk)-1}, destinations {j}-{j+len(destination_chunk)-1}): {matrix_result['status']}")
-                    # If a chunk fails, we might want to fill with a large value or raise an error
-                    # For simplicity, filling the failed chunk area with 999999999 for all elements (large number in meters)
-                    for idx_origin in range(len(origin_chunk)):
-                        for idx_dest in range(len(destination_chunk)):
-                            global_origin_index = i + idx_origin
-                            global_destination_index = j + idx_dest
-                            full_distance_matrix[global_origin_index][global_destination_index] = 999999999
-
-        data['distance_matrix'] = full_distance_matrix
-        print("Distance matrix fetched and compiled successfully.")
+        if response_data.get('code') == 'Ok':
+            # OSRM returns duration in seconds. 
+            # This becomes your distance_matrix for OR-Tools.
+            data['distance_matrix'] = response_data['durations']
+            st.success("OSRM Matrix generated successfully.")
+        else:
+            st.error(f"OSRM API Error: {response_data.get('code')}")
+            return None
 
     except Exception as e:
-        print(f"An unexpected error occurred during API calls: {e}")
-        # Fallback to a dummy matrix or raise an error
-        data['distance_matrix'] = [[0 for _ in addresses] for _ in addresses] # Dummy matrix
+        st.error(f"Failed to connect to OSRM: {e}")
+        return None
 
     return data
-
+    
 # 2. THE SOLVER (The "Brain")
 def solve_routing(data):
     manager = pywrapcp.RoutingIndexManager(len(data['distance_matrix']),
