@@ -60,64 +60,69 @@ def create_data_model(addresses, num_vehicles, gmaps_client, depot_index=0):
     st.write(data) #debug
     return data
     
-# 2. THE SOLVER (The "Brain")
-def solve_routing(data):
-    manager = pywrapcp.RoutingIndexManager(len(data['distance_matrix']),
-                                           data['num_vehicles'], data['depot'])
-    routing = pywrapcp.RoutingModel(manager)
-
-    # Define the service time per stop in seconds (e.g., 10 minutes = 600 seconds)
-    SERVICE_TIME_PER_STOP = 600 
-
-    def time_callback(from_index, to_index):
-        # Get driving time from the matrix
-        driving_time = data['distance_matrix'][manager.IndexToNode(from_index)][manager.IndexToNode(to_index)]
+    # 2. THE SOLVER (The "Brain")
+    def solve_routing(data, service_time_mins=10):
+        """
+        Optimizes for total travel time + service time at each stop.
+        service_time_mins: The time spent at each delivery location (default 10 mins).
+        """
+        # Convert service time to seconds to match OSRM duration units
+        service_time_seconds = service_time_mins * 60
     
-        # If we are leaving a stop (not the depot), add the service time
-        if manager.IndexToNode(from_index) != data['depot']:
-            return driving_time + SERVICE_TIME_PER_STOP
-    
-        return driving_time
-
-    transit_callback_index = routing.RegisterTransitCallback(time_callback)
-    
-    routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)
-
-    # Balancing load (max distance per team). Adjust this value based on typical route lengths.
-    # The distance is in meters. So 5000000 means 5000 km in meters.
-    routing.AddDimension(transit_callback_index, 0, 5000000, True, 'Distance') # Capacity now in meters
-    
-    # Add objective: Minimize the maximum distance traveled by any vehicle.
-    distance_dimension = routing.GetDimensionOrDie('Distance')
-    # Add a global span constraint to the distance dimension (optional, but good practice)
-    # distance_dimension.SetGlobalSpanCostCoefficient(100) # This is for minimizing span, not max
-
-    max_shift_time = 28800 #8-hour shift limit (8 * 3600 = 28,800 seconds)
-    
-    routing.AddDimension(
-        transit_callback_index,
-        0,                # Allow zero waiting time
-        max_shift_time,   # Maximum time per team in seconds
-        True,             # Start cumulative time at zero
-        'Time'            # Name of the dimension
+        manager = pywrapcp.RoutingIndexManager(
+            len(data['distance_matrix']),
+            data['num_vehicles'], 
+            data['depot']
         )
+        routing = pywrapcp.RoutingModel(manager)
 
-    time_dimension = routing.GetDimensionOrDie('Time')
-    time_dimension.SetGlobalSpanCostCoefficient(100) # This keeps teams balanced by time    
+        # 1. Define the Time Callback
+        def time_callback(from_index, to_index):
+            """Returns the total time (travel + service) between two nodes."""
+            from_node = manager.IndexToNode(from_index)
+            to_node = manager.IndexToNode(to_index)
+            
+            # Get driving duration from OSRM matrix
+            driving_duration = data['distance_matrix'][from_node][to_node]
+            
+            # Add service time if the 'from' node is a delivery stop (not the depot)
+            if from_node != data['depot']:
+                return int(driving_duration + service_time_seconds)
+            
+            return int(driving_duration)
     
-    # Minimize the maximum distance traveled by any vehicle.
-    # We need to find the maximum cumul value among all vehicles at their respective end nodes.
-    # The objective is to minimize this maximum value.
-    routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)
-    # Add a dimension for distance
-    distance_dimension = routing.GetDimensionOrDie('Distance')
-    distance_dimension.SetGlobalSpanCostCoefficient(100)
-
-    search_params = pywrapcp.DefaultRoutingSearchParameters()
-    search_params.first_solution_strategy = (
-        routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC)
-
-    return routing, manager, routing.SolveWithParameters(search_params)
+        transit_callback_index = routing.RegisterTransitCallback(time_callback)
+        
+        # 2. Set the Cost (Objective) to Time
+        routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)
+    
+        # 3. Add Time Dimension for Balancing
+        # We set a high upper bound (e.g., 12 hours = 43,200 seconds) 
+        # to ensure all routes are feasible.
+        max_time_per_team = 43200 
+        
+        routing.AddDimension(
+            transit_callback_index,
+            0,                # No waiting time allowed at stops
+            max_time_per_team,
+            True,             # Start cumulative time at 0
+            'Time'
+        )
+    
+        # 4. Global Span Cost: This is what "Balances" the load.
+        # It forces the solver to minimize the difference between the longest and shortest route.
+        time_dimension = routing.GetDimensionOrDie('Time')
+        time_dimension.SetGlobalSpanCostCoefficient(100)
+    
+        # 5. Search Parameters
+        search_params = pywrapcp.DefaultRoutingSearchParameters()
+        search_params.first_solution_strategy = (
+            routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
+        )
+        # Give the solver a few seconds to find a better balanced solution
+        search_params.time_limit.seconds = 5 
+    
+        return routing, manager, routing.SolveWithParameters(search_params)
 
 # 3. THE FORMATTER (The "Output")
 def get_readable_output(data, manager, routing, solution):
