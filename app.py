@@ -35,7 +35,7 @@ def create_data_model(addresses, num_vehicles, gmaps_client, depot_index=0):
     osrm_url = f"http://router.project-osrm.org/table/v1/driving/{coords_string}"
     
     # We request 'duration' for time-based optimization
-    params = {"annotations": "distance"} #params = {"annotations": "duration"}
+    params = {"annotations": "duration"}
     
     st.info("Fetching travel times from OSRM...")
     try:
@@ -45,9 +45,7 @@ def create_data_model(addresses, num_vehicles, gmaps_client, depot_index=0):
         if response_data.get('code') == 'Ok':
             # OSRM returns duration in seconds. 
             # This becomes your distance_matrix for OR-Tools.
-            data['distance_matrix'] = response_data['distances'] #data['distance_matrix'] = response_data['durations']
-            
-            
+            data['distance_matrix'] = response_data['durations']            
             st.success("OSRM Matrix generated successfully.")
         else:
             st.error(f"OSRM API Error: {response_data.get('code')}")
