@@ -9,7 +9,7 @@ import requests
 gmaps = googlemaps.Client(key=st.secrets.GOOGLE_MAPS_API_KEY)
 
 # 1. DATA PREPARATION - using OSRM demo server
-def create_data_model(addresses, num_vehicles, gmaps_client, depot_index=0):
+def create_data_model(addresses, num_vehicles, gmaps, depot_index=0):
     data = {}
     data['addresses'] = addresses
     data['num_vehicles'] = num_vehicles
