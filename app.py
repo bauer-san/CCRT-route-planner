@@ -55,7 +55,7 @@ def create_data_model(addresses, num_vehicles, gmaps_client, depot_index=0):
         st.error(f"Failed to connect to OSRM: {e}")
         return None
         
-    st.write(data) #debug
+    #st.write(data) #debug
     return data
     
     # 2. THE SOLVER (The "Brain")
