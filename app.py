@@ -118,7 +118,7 @@ def create_data_model(addresses, num_vehicles, gmaps_client, depot_index=0):
             routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
         )
         # Give the solver a few seconds to find a better balanced solution
-        search_params.time_limit.seconds = 5 
+        search_params.time_limit.seconds = 15 
     
         return routing, manager, routing.SolveWithParameters(search_params)
 
