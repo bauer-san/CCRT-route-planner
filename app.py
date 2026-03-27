@@ -59,7 +59,7 @@ def create_data_model(addresses, num_vehicles, gmaps_client, depot_index=0):
     return data
     
     # 2. THE SOLVER (The "Brain")
-    def solve_routing(data, service_time_mins=10):
+def solve_routing(data, service_time_mins=10):
         """
         Optimizes for total travel time + service time at each stop.
         service_time_mins: The time spent at each delivery location (default 10 mins).
