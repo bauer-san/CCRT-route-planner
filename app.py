@@ -150,7 +150,7 @@ def print_final_manifests(route_results):
         stops = details['route']
         distance = details['distance']
         st.write(f"\n=== {team.upper()} MANIFEST ===")
-        st.write(f"Total Distance: {distance} km") # Display in kilometers
+        #st.write(f"Total Distance: {distance} km") # Display in kilometers
         # Generate Google Maps Link
         encoded_waypoints = [urllib.parse.quote_plus(stop) for stop in stops[1:-1]] # URL encode waypoints
         waypoints_str = "|".join(encoded_waypoints)
