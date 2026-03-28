@@ -111,13 +111,26 @@ def solve_routing(data, service_time_mins=10):
 
 # --- UI & APP ---
 st.set_page_config(page_title="CCRT Route Planner", layout="wide")
+
+st.logo("CCRT_logo.png", size="large", link="https://www.ccrt.org/")
+
 st.title("🚚 CCRT Route Optimizer")
 
-with st.expander("📖 Instructions", expanded=False):
-    st.markdown("1. Upload file with 'Address' column. 2. Set teams. 3. Optimize and download PDFs.")
+with st.expander("📖 How to use the CCRT Route Planner", expanded=False):
+    st.markdown("""
+    ### 🚀 Getting Started
+    1. **Prepare Your File**: Upload a CSV or Excel file with a column titled **'Address'**.
+    2. **Configure Teams**: Select how many delivery teams are working today in the sidebar.
+    3. **Optimize**: Click **'Optimize Routes'**. The app calculates the fastest paths and balances work between teams.
+    4. **Dispatch**: Click the **'Open Navigation'** link to launch Google Maps on a driver's phone.
+    
+    *Note: All routes start and end at CCRT HQ (49 W Huron St).*
+    """)
 
 with st.sidebar:
+    st.header("Settings")
     num_teams = st.number_input("Number of Teams", 1, 20, 3)
+    st.info("Upload a file to begin.")
     
 service_time = 10 #minutes
 
