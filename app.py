@@ -155,8 +155,8 @@ if uploaded_file:
                             c1, c2 = st.columns(2)
                             with c1:
                                 st.image(m_url)
-                                pdf_data = generate_pdf_manifest(f"Team {vid+1}", route, m_url)
-                                st.download_button("📄 Download PDF", pdf_data, f"Team_{vid+1}.pdf", "application/pdf")
+                                #pdf_data = generate_pdf_manifest(f"Team {vid+1}", route, m_url)
+                                #st.download_button("📄 Download PDF", pdf_data, f"Team_{vid+1}.pdf", "application/pdf")
                             with c2:
                                 st.table(route)
                     else:
