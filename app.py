@@ -165,12 +165,12 @@ if uploaded_file:
                             t_coords = [main_data['addr_to_coords'][addr] for addr in route]
                             m_url = get_static_map_url(t_coords)
                             
-                            c1, c2 = st.columns(2)
-                            with c1:
+                            col1, col2 = st.columns(2)
+                            with col1:
                                 st.image(m_url)
                                 #pdf_data = generate_pdf_manifest(f"Team {vid+1}", route, m_url)
                                 #st.download_button("📄 Download PDF", pdf_data, f"Team_{vid+1}.pdf", "application/pdf")
-                            with c2:
+                            with col2:
                                 # --- GOOGLE MAPS LINK GENERATION ---
                                 origin = urllib.parse.quote_plus(route[0])
                                 destination = urllib.parse.quote_plus(route[-1])
@@ -178,7 +178,7 @@ if uploaded_file:
                                 
                                 gmaps_nav_url = f"https://www.google.com/maps/dir/?api=1&origin={origin}&destination={destination}&waypoints={waypoints}&travelmode=driving"
                                 
-                                st.markdown(f"### [🔗 Open Navigation in Google Maps]({gmaps_nav_url})")
+                                st.markdown(f"[🔗 Open Navigation in Google Maps]({gmaps_nav_url})")
             
                                 st.table(route)
                     else:
