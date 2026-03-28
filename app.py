@@ -109,55 +109,60 @@ def solve_routing(data, service_time_mins=10):
     search_params.time_limit.seconds = 10
     return routing, manager, routing.SolveWithParameters(search_params)
 
-# --- UI & APP ---
-st.set_page_config(page_title="CCRT Route Planner", layout="wide")
-st.title("🚚 CCRT Route Optimizer")
+# --- SESSION STATE INITIALIZATION ---
+if 'optimized_results' not in st.session_state:
+    st.session_state.optimized_results = None
+if 'main_data' not in st.session_state:
+    st.session_state.main_data = None
 
-with st.expander("📖 Instructions", expanded=False):
-    st.markdown("1. Upload file with 'Address' column. 2. Set teams. 3. Optimize and download PDFs.")
+# --- UI LOGIC ---
+if st.button("🚀 Optimize Routes"):
+    with st.spinner("Calculating..."):
+        data = create_data_model(addresses, num_teams, gmaps)
+        if data:
+            model, manager, solution = solve_routing(data, service_time)
+            if solution:
+                # Store results in session state so they survive the next button click
+                all_teams = {}
+                for vid in range(data['num_vehicles']):
+                    idx = model.Start(vid)
+                    route = []
+                    while not model.IsEnd(idx):
+                        route.append(data['addresses'][manager.IndexToNode(idx)])
+                        idx = solution.Value(model.NextVar(idx))
+                    route.append(data['addresses'][manager.IndexToNode(idx)])
+                    
+                    # Pre-calculate Map URL
+                    t_coords = [data['addr_to_coords'][addr] for addr in route]
+                    m_url = get_static_map_url(t_coords)
+                    
+                    all_teams[f"Team {vid+1}"] = {"route": route, "map_url": m_url}
+                
+                st.session_state.optimized_results = all_teams
+                st.session_state.main_data = data
+            else:
+                st.error("No solution found.")
 
-with st.sidebar:
-    num_teams = st.number_input("Number of Teams", 1, 20, 3)
-    
-service_time = 10 #minutes
-
-uploaded_file = st.file_uploader("Upload address file", type=["csv", "xlsx"])
-
-if uploaded_file:
-    df = pd.read_csv(uploaded_file) if uploaded_file.name.endswith('.csv') else pd.read_excel(uploaded_file)
-    if 'Address' not in df.columns:
-        st.error("Missing 'Address' column.")
-    else:
-        addresses = df['Address'].tolist()
-        addresses.insert(0, CCRTHQ_ADDRESS) # Depot
-
-        if st.button("🚀 Optimize Routes"):
-            with st.spinner("Calculating..."):
-                main_data = create_data_model(addresses, num_teams, gmaps)
-                if main_data:
-                    model, manager, solution = solve_routing(main_data, service_time)
-                    if solution:
-                        for vid in range(main_data['num_vehicles']):
-                            idx = model.Start(vid)
-                            route = []
-                            while not model.IsEnd(idx):
-                                route.append(main_data['addresses'][manager.IndexToNode(idx)])
-                                idx = solution.Value(model.NextVar(idx))
-                            route.append(main_data['addresses'][manager.IndexToNode(idx)])
-
-                            # Output
-                            st.divider()
-                            st.subheader(f"Team {vid + 1}")
-                            
-                            t_coords = [main_data['addr_to_coords'][addr] for addr in route]
-                            m_url = get_static_map_url(t_coords)
-                            
-                            c1, c2 = st.columns(2)
-                            with c1:
-                                st.image(m_url)
-                                #pdf_data = generate_pdf_manifest(f"Team {vid+1}", route, m_url)
-                                #st.download_button("📄 Download PDF", pdf_data, f"Team_{vid+1}.pdf", "application/pdf")
-                            with c2:
-                                st.table(route)
-                    else:
-                        st.error("No solution found.")
+# --- DISPLAY RESULTS (Outside the Optimize Button block) ---
+if st.session_state.optimized_results:
+    for team_name, details in st.session_state.optimized_results.items():
+        st.divider()
+        st.subheader(team_name)
+        
+        c1, c2 = st.columns(2)
+        with c1:
+            st.image(details['map_url'])
+            
+            # Generate PDF only when this specific button is clicked
+            # We use a unique key for every button
+            pdf_bytes = generate_pdf_manifest(team_name, details['route'], details['map_url'])
+            
+            st.download_button(
+                label=f"📄 Download {team_name} PDF",
+                data=pdf_bytes,
+                file_name=f"{team_name}_manifest.pdf",
+                mime="application/pdf",
+                key=f"pdf_btn_{team_name}"
+            )
+        with c2:
+            st.table(details['route'])
