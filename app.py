@@ -109,55 +109,135 @@ def solve_routing(data, service_time_mins=10):
     search_params.time_limit.seconds = 10
     return routing, manager, routing.SolveWithParameters(search_params)
 
-# --- UI & APP ---
+# --- CONFIGURATION & UI ---
 st.set_page_config(page_title="CCRT Route Planner", layout="wide")
+
+# Custom CSS to handle side-by-side printing
+st.markdown("""
+    <style>
+    @media print {
+        [data-testid="stSidebar"], header { display: none !important; }
+        .stHorizontalBlock { display: flex !important; flex-direction: row !important; }
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 st.title("🚚 CCRT Route Optimizer")
 
+# Initialize Session State if not already present
+if 'optimized_results' not in st.session_state:
+    st.session_state.optimized_results = None
+if 'main_data' not in st.session_state:
+    st.session_state.main_data = None
+
+# --- HELP & INSTRUCTIONS ---
 with st.expander("📖 Instructions", expanded=False):
-    st.markdown("1. Upload file with 'Address' column. 2. Set teams. 3. Optimize and download PDFs.")
+    st.markdown("""
+    1. Upload your file. 2. Set the number of teams. 3. Click Optimize. 
+    4. View results below and download individual PDFs for each driver.
+    """)
 
+# Sidebar
 with st.sidebar:
+    st.header("Settings")
     num_teams = st.number_input("Number of Teams", 1, 20, 3)
+    service_time = st.slider("Minutes per stop", 1, 60, 10)
     
-service_time = 10 #minutes
+    if st.button("🗑️ Clear Results"):
+        st.session_state.optimized_results = None
+        st.session_state.main_data = None
+        st.rerun()
 
+# File Uploader
 uploaded_file = st.file_uploader("Upload address file", type=["csv", "xlsx"])
 
+# --- MAIN APP LOGIC ---
 if uploaded_file:
-    df = pd.read_csv(uploaded_file) if uploaded_file.name.endswith('.csv') else pd.read_excel(uploaded_file)
+    # Read the file
+    if uploaded_file.name.endswith('.csv'):
+        df = pd.read_csv(uploaded_file)
+    else:
+        df = pd.read_excel(uploaded_file)
+
     if 'Address' not in df.columns:
         st.error("Missing 'Address' column.")
     else:
         addresses = df['Address'].tolist()
-        addresses.insert(0, CCRTHQ_ADDRESS) # Depot
+        # Add Depot (CCRT HQ)
+        addresses.insert(0, "49 W Huron St, Pontiac, MI 48342") 
 
+        # Step 1: The "Trigger" - This only runs when the button is clicked
         if st.button("🚀 Optimize Routes"):
-            with st.spinner("Calculating..."):
-                main_data = create_data_model(addresses, num_teams, gmaps)
-                if main_data:
-                    model, manager, solution = solve_routing(main_data, service_time)
+            with st.spinner("Geocoding and calculating optimal paths..."):
+                data = create_data_model(addresses, num_teams, gmaps)
+                
+                if data:
+                    model, manager, solution = solve_routing(data, service_time)
+                    
                     if solution:
-                        for vid in range(main_data['num_vehicles']):
+                        all_teams = {}
+                        for vid in range(data['num_vehicles']):
                             idx = model.Start(vid)
                             route = []
                             while not model.IsEnd(idx):
-                                route.append(main_data['addresses'][manager.IndexToNode(idx)])
+                                node = manager.IndexToNode(idx)
+                                route.append(data['addresses'][node])
                                 idx = solution.Value(model.NextVar(idx))
-                            route.append(main_data['addresses'][manager.IndexToNode(idx)])
-
-                            # Output
-                            st.divider()
-                            st.subheader(f"Team {vid + 1}")
+                            # Final return to depot
+                            route.append(data['addresses'][manager.IndexToNode(idx)])
                             
-                            t_coords = [main_data['addr_to_coords'][addr] for addr in route]
+                            # Get coords for map
+                            t_coords = [data['addr_to_coords'][addr] for addr in route]
                             m_url = get_static_map_url(t_coords)
                             
-                            c1, c2 = st.columns(2)
-                            with c1:
-                                st.image(m_url)
-                                #pdf_data = generate_pdf_manifest(f"Team {vid+1}", route, m_url)
-                                #st.download_button("📄 Download PDF", pdf_data, f"Team_{vid+1}.pdf", "application/pdf")
-                            with c2:
-                                st.table(route)
+                            all_teams[f"Team {vid+1}"] = {
+                                "route": route, 
+                                "map_url": m_url
+                            }
+                        
+                        # Save to session state so it persists during PDF downloads
+                        st.session_state.optimized_results = all_teams
+                        st.session_state.main_data = data
                     else:
-                        st.error("No solution found.")
+                        st.error("No solution found. Try increasing the number of teams.")
+
+# Step 2: The "Renderer" - This runs on every refresh if data exists in session state
+if st.session_state.optimized_results:
+    st.divider()
+    st.header("Optimized Dispatch Manifests")
+    
+    for team_name, details in st.session_state.optimized_results.items():
+        st.subheader(team_name)
+        
+        # Create the Side-by-Side layout
+        col1, col2 = st.columns([1, 1])
+        
+        with col1:
+            st.write("**Route Map**")
+            st.image(details['map_url'], use_container_width=True)
+            
+            # PDF Download Logic
+            pdf_bytes = generate_pdf_manifest(
+                team_name, 
+                details['route'], 
+                details['map_url']
+            )
+            
+            st.download_button(
+                label=f"📄 Download {team_name} PDF",
+                data=pdf_bytes,
+                file_name=f"{team_name.replace(' ', '_')}_Manifest.pdf",
+                mime="application/pdf",
+                key=f"pdf_{team_name}" # Unique key is required for each team
+            )
+            
+        with col2:
+            st.write("**Stop List**")
+            # Format the list as a clean table for the UI
+            route_df = pd.DataFrame({
+                "Stop": [f"#{i}" if 0 < i < len(details['route'])-1 else "DEPOT" for i in range(len(details['route']))],
+                "Address": details['route']
+            })
+            st.table(route_df)
+        
+        st.divider()
