@@ -13,6 +13,8 @@ from ortools.constraint_solver import pywrapcp
 # Assumes GOOGLE_MAPS_API_KEY is in your Streamlit Secrets
 gmaps = googlemaps.Client(key=st.secrets.GOOGLE_MAPS_API_KEY)
 
+CCRTHQ_ADDRESS = "49 W Huron St, Pontiac, MI 48342"
+
 # --- PDF GENERATION LOGIC ---
 def generate_pdf_manifest(team_name, stops, map_url):
     pdf = FPDF()
@@ -44,7 +46,7 @@ def generate_pdf_manifest(team_name, stops, map_url):
         pdf.cell(20, 10, label, 1)
         pdf.cell(170, 10, str(addr), 1, ln=True)
 
-    return pdf.output()
+    return bytes(pdf.output())
 
 # --- MAP & DATA LOGIC ---
 def get_static_map_url(osrm_coords, api_key=st.secrets.GOOGLE_MAPS_API_KEY):
@@ -116,7 +118,8 @@ with st.expander("📖 Instructions", expanded=False):
 
 with st.sidebar:
     num_teams = st.number_input("Number of Teams", 1, 20, 3)
-    service_time = st.slider("Minutes per stop", 1, 30, 10)
+    
+service_time = 10 #minutes
 
 uploaded_file = st.file_uploader("Upload address file", type=["csv", "xlsx"])
 
@@ -126,7 +129,7 @@ if uploaded_file:
         st.error("Missing 'Address' column.")
     else:
         addresses = df['Address'].tolist()
-        addresses.insert(0, "49 W Huron St, Pontiac, MI 48342") # Depot
+        addresses.insert(0, CCRTHQ_ADDRESS) # Depot
 
         if st.button("🚀 Optimize Routes"):
             with st.spinner("Calculating..."):
