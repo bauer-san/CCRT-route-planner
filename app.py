@@ -114,7 +114,7 @@ st.set_page_config(page_title="CCRT Route Planner", layout="wide")
 
 st.logo("CCRT_logo.png", size="large", link="https://www.ccrt.org/")
 
-st.title("🚚 CCRT Route Optimizer")
+st.title("🚚 CCRT Route Optimizer - OSRM")
 
 with st.expander("📖 How to use the CCRT Route Planner", expanded=False):
     st.markdown("""
