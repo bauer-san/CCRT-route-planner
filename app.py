@@ -8,6 +8,33 @@ import requests
 
 gmaps = googlemaps.Client(key=st.secrets.GOOGLE_MAPS_API_KEY)
 
+def get_static_map_url(osrm_coords, api_key=st.secrets.GOOGLE_MAPS_API_KEY):
+    """
+    Generates a Google Static Maps URL for a specific team's route.
+    osrm_coords: list of [lng, lat]
+    """
+    base_url = "https://maps.googleapis.com/maps/api/staticmap?"
+    
+    # 1. Format Markers (A for Start, B, C... for stops)
+    markers = []
+    for i, coord in enumerate(osrm_coords):
+        label = "S" if i == 0 else "E" if i == len(osrm_coords)-1 else str(i)
+        color = "green" if i == 0 else "red" if i == len(osrm_coords)-1 else "blue"
+        markers.append(f"markers=color:{color}|label:{label}|{coord[1]},{coord[0]}")
+    
+    # 2. Format Path (The line connecting the dots)
+    path_points = "|".join([f"{c[1]},{c[0]}" for c in osrm_coords])
+    path = f"path=color:0x0000ff|weight:5|{path_points}"
+    
+    # 3. Combine parameters
+    params = {
+        "size": "600x400",
+        "maptype": "roadmap",
+        "key": api_key
+    }
+    
+    return base_url + urllib.parse.urlencode(params) + "&" + "&".join(markers) + "&" + path
+
 # 1. DATA PREPARATION - using OSRM demo server
 def create_data_model(addresses, num_vehicles, gmaps_client, depot_index=0):
     data = {}
@@ -156,7 +183,20 @@ def print_final_manifests(route_results):
         waypoints_str = "|".join(encoded_waypoints)
         gmaps_url = f"https://www.google.com/maps/dir/?api=1&origin={urllib.parse.quote_plus(stops[0])}&destination={urllib.parse.quote_plus(stops[-1])}&waypoints={waypoints_str}"
         st.markdown(f"[🔗 Open in Google Maps]({gmaps_url})")
-        st.table(stops)
+
+        # Create two columns
+        col1, col2 = st.columns([1, 1]) 
+
+        with col1:
+            st.write("### Route Preview")
+            # Use use_container_width to ensure it fills its column
+            # Get coordinates for this team specifically
+            team_coords = [addr_to_coords[stop] for stop in details['route']]
+            map_url = get_static_map_url(team_coords)
+            st.image(map_url, use_container_width=True)
+
+        with col2:
+            st.table(stops)
 
 # --- CONFIGURATION & UI ---
 st.set_page_config(page_title="CCRT Route Planner", layout="wide")
