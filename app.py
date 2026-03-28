@@ -159,13 +159,13 @@ if uploaded_file:
                                 #st.download_button("📄 Download PDF", pdf_data, f"Team_{vid+1}.pdf", "application/pdf")
                             with c2:
                                 # --- GOOGLE MAPS LINK GENERATION ---
-                                stops = details['route']
-                                # Start/End are index 0 and -1. Waypoints are everything in between.
-                                origin = urllib.parse.quote_plus(stops[0])
-                                destination = urllib.parse.quote_plus(stops[-1])
-                                waypoints = "|".join([urllib.parse.quote_plus(s) for s in stops[1:-1]])
-                                gmaps_link = f"https://www.google.com/maps/dir/?api=1&origin={origin}&destination={destination}&waypoints={waypoints}"            
-                                st.markdown(f"### [🔗 Open Navigation in Google Maps]({gmaps_link})")
+                                origin = urllib.parse.quote_plus(route[0])
+                                destination = urllib.parse.quote_plus(route[-1])
+                                waypoints = "|".join([urllib.parse.quote_plus(s) for s in route[1:-1]])
+                                
+                                gmaps_nav_url = f"https://www.google.com/maps/dir/?api=1&origin={origin}&destination={destination}&waypoints={waypoints}&travelmode=driving"
+                                
+                                st.markdown(f"### [🔗 Open Navigation in Google Maps]({gmaps_nav_url})")
             
                                 st.table(route)
                     else:
