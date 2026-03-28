@@ -158,6 +158,15 @@ if uploaded_file:
                                 #pdf_data = generate_pdf_manifest(f"Team {vid+1}", route, m_url)
                                 #st.download_button("📄 Download PDF", pdf_data, f"Team_{vid+1}.pdf", "application/pdf")
                             with c2:
+                                # --- GOOGLE MAPS LINK GENERATION ---
+                                stops = details['route']
+                                # Start/End are index 0 and -1. Waypoints are everything in between.
+                                origin = urllib.parse.quote_plus(stops[0])
+                                destination = urllib.parse.quote_plus(stops[-1])
+                                waypoints = "|".join([urllib.parse.quote_plus(s) for s in stops[1:-1]])
+                                gmaps_link = f"https://www.google.com/maps/dir/?api=1&origin={origin}&destination={destination}&waypoints={waypoints}"            
+                                st.markdown(f"### [🔗 Open Navigation in Google Maps]({gmaps_link})")
+            
                                 st.table(route)
                     else:
                         st.error("No solution found.")
